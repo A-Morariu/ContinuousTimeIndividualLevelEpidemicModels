@@ -3,12 +3,14 @@
 ###############################################################################
 # PREAMBLE
 ###############################################################################
-
+from collections import namedtuple
 import tensorflow as tf
 import tensorflow_probability as tfp
 
 tla = tf.linalg
 tfd = tfp.distributions
+
+EventTrace = namedtuple('EventTrace', 'time state transition unit')
 
 
 def expand_state(epidemic_state):
@@ -217,10 +219,32 @@ def continuous_time_propogate(hazard_rate_fn, stoichiometry):
 
         next_covars = covars
 
-        return next_time, next_state, next_covars
+        track_event = EventTrace(next_time, next_state,
+                                 transition_id, individual_id)
+
+        return next_time, next_state, next_covars, track_event
     return propagate_fn
 
 
-def continuous_markov_simulation():
+def continuous_markov_simulation(initial_state):
     # this function implements the tf.while loop to generate 1 path of the epidemic
-    return None
+    initial_state = expand_state(initial_state)
+
+    # initiate the EventTrace
+    initial_trace = EventTrace(time=tf.constant(0., dtype=tf.float64),
+                               state=initial_state,
+                               transition=tf.constant(0., dtype=tf.float64),
+                               unit=tf.constant(0., dtype=tf.float64))
+
+    # create TensorArray to store epidemic progression
+    epidemic_trace = tf_map(
+        lambda x: tf.TensorArray(dtype=x.dtype, size=1, dynamic_size=True),
+        initial_trace)
+
+    # create the body fn for the while loop
+
+    # create the stop condition (cond fn) for the while loop
+
+    # run an iteration
+
+    return epidemic_trace
