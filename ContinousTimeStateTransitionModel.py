@@ -182,8 +182,8 @@ class ContinuousTimeStateTransitionModelSimulation:
         # Inner dimension represents the unit
         num_units = self.InitialState.shape[-1]
 
-        # @tf.function(jit_compile= True) Does this work? 
-        def Gillespie_iteration(step, time, state, seed, accum):
+        # @tf.function(jit_compile= True) Does this work?
+        def gillespie_iteration(step, time, state, seed, accum):
             """
             Perform 1 iteration of the Gillespie algorithm for an epidemic model.
             Record all necessary information and return the updated state of the
@@ -235,11 +235,11 @@ class ContinuousTimeStateTransitionModelSimulation:
         # accum buffer
         eventList = _EventList(
             time=tf.TensorArray(
-                self.InitialState.dtype, size=0, dynamic_size=True), 
-                transition=tf.TensorArray(
-                    tf.int32, size=0, dynamic_size=True), 
-                unit=tf.TensorArray(
-                    tf.int32, size=0, dynamic_size=True))
+                self.InitialState.dtype, size=0, dynamic_size=True),
+            transition=tf.TensorArray(
+                tf.int32, size=0, dynamic_size=True),
+            unit=tf.TensorArray(
+                tf.int32, size=0, dynamic_size=True))
 
         # Simple stopping condition, in this case when the rate drops to 0
         #   - Exercise: make this user-definable!
@@ -258,7 +258,7 @@ class ContinuousTimeStateTransitionModelSimulation:
         # Run while loop to simulate to stopping point
         step, time, state, seed, eventList = tf.while_loop(
             self.StopConditionFn,
-            Gillespie_iteration,
+            gillespie_iteration,
             loop_vars=(0, 0.0, self.InitialState, seed, eventList)
         )
 

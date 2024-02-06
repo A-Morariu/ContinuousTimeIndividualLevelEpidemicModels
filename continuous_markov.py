@@ -219,9 +219,13 @@ def continuous_time_propogate(hazard_rate_fn, stoichiometry):
 
         next_covars = covars
 
-        track_event = EventTrace(next_time, next_state,
-                                 transition_id, individual_id)
-
+        track_event = EventTrace(next_time, next_state,             # state
+                                 transition_id, individual_id)      # result
+        # what we want: a state transformer
+        # one_step: state -> (state, result)
+        # time - wall clock and step
+        # state - state of epi and state of covars (this can be a tuple?)
+        # TO DO: add function to strip the result from the state and add to accumulator
         return next_time, next_state, next_covars, track_event
     return propagate_fn
 
