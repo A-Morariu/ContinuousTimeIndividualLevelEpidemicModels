@@ -174,7 +174,7 @@ def expand_epidemic_event(
     return tf.nest.map_structure(lambda x: x.stack(), accum)
 
 
-def continuous_time_log_likelihoood(
+def continuous_time_log_likelihood(
     transition_rate_fn: Callable,
     incidence_matrix: Tensor,
     initial_state: Tensor,
@@ -184,9 +184,7 @@ def continuous_time_log_likelihoood(
 
     # TensorArray to store the log-likelihood of each event
     log_lik_accum = tf.TensorArray(DTYPE, size=num_jumps)
-    log_lik_accum = log_lik_accum.write(
-        0, 0.0
-    )  # Initialize with zero log-likelihood
+    log_lik_accum = log_lik_accum.write(0, 0.0)  # Initialize with zero log-likelihood
 
     # Loop condition: Continue as long as the jump counter is less than num_jumps.
     # Warning: can loop over degenrate events which have P(x) = 0 but evaluate to NaN
@@ -201,13 +199,18 @@ def continuous_time_log_likelihoood(
         """
 
         # Compute the transition rates for the current state
-        total_rate, event_rate = transition_rate_fn(event.time[ii], state)
+        transition_rates = transition_rate_fn(event.time[ii], state)
+        transition_rates = tf.math.multiply(transition_rates, state[:-1, :])
+
+        total_rate = tf.reduce_sum(transition_rates)
+        event_rate = transition_rates[event.transition[ii], event.individual[ii]]
 
         # Compute the time interval between the current and next event
         time_delta = event.time[ii + 1] - event.time[ii]
 
         # Compute the log-likelihood of the event
         log_lik = tf.math.log(event_rate) - total_rate * time_delta
+        print(f"Slice {ii} --> Time-delta {time_delta} --> {log_lik}")
 
         # Accumulate the log-likelihood in the TensorArray
         log_lik_accum = log_lik_accum.write(ii + 1, log_lik)
@@ -227,8 +230,11 @@ def continuous_time_log_likelihoood(
         body,
         loop_vars=(0, _one_hot_expand_state(initial_state), log_lik_accum),
     )
+    log_lik_accum = tf.nest.map_structure(lambda x: x.stack(), log_lik_accum)
 
-    return tf.reduce_sum(log_lik_accum)
+    return tf.reduce_sum(
+        tf.boolean_mask(log_lik_accum, tf.math.is_finite(log_lik_accum))
+    )
 
 
 def _make_transition_rates(rate_fn):
@@ -262,7 +268,7 @@ def _make_transition_rates(rate_fn):
     return _compute_transition_rates
 
 
-def continuous_time_log_likelihoood_v1(
+def continuous_time_log_likelihood_v1(
     transition_rate_fn: Callable,
     incidence_matrix: Tensor,
     initial_state: Tensor,
@@ -288,14 +294,12 @@ def continuous_time_log_likelihoood_v1(
         Tensor: The log-likelihood of the continuous-time Markov process.
     """
     # expand the event into a sequence of (sparse) states
-    states = expand_epidemic_event(
-        incidence_matrix, initial_state, num_jumps, event
-    )
+    states = expand_epidemic_event(incidence_matrix, initial_state, num_jumps, event)
     # vectorized map since slices are independent
     transition_rates_per_state = tf.vectorized_map(
         fn=lambda x: tf.stack(transition_rate_fn(*x)),
         elems=[event.time, states],
-        dtype=DTYPE,
+        # dtype=DTYPE,
     )
 
     # event rates for the events which occured
@@ -307,14 +311,13 @@ def continuous_time_log_likelihoood_v1(
         ],
         axis=-1,
     )
-
+    print(f"Indices: {indices}")
+    print(f"Transition rates per state: {transition_rates_per_state}")
     event_rates = tf.gather_nd(transition_rates_per_state, indices)
 
     # time intervals between events
     time_deltas = _compute_time_deltas(event.time)
 
-    event_log_likelihoods = tfd.Exponential(rate=event_rates).log_prob(
-        time_deltas
-    )
+    event_log_likelihoods = tfd.Exponential(rate=event_rates).log_prob(time_deltas)
 
     return tf.reduce_sum(event_log_likelihoods)

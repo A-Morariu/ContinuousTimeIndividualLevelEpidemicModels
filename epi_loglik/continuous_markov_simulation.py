@@ -9,6 +9,10 @@ import seaborn as sns
 from matplotlib.lines import Line2D
 
 from continuous_markov import EpidemicEvent, continuous_markov_simulation
+from continuous_markov_loglik import (
+    continuous_time_log_likelihood,
+    continuous_time_log_likelihood_v1,
+)
 
 # aliasing for convenience
 tfd = tfp.distributions
@@ -170,3 +174,13 @@ plt.legend(
 )
 ax.plot()
 plt.savefig("small_scale_epidemic.png")
+
+ll_iterative = continuous_time_log_likelihood(
+    transition_rate_fn=rate_fn,
+    incidence_matrix=incidence_matrix,
+    initial_state=initial_population,
+    num_jumps=10,
+    event=small_scale_epidemic,
+)
+
+print(f"Log-likelihood using time-slicing method: {ll_iterative}")
