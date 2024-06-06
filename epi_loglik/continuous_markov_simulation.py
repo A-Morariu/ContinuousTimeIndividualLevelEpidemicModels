@@ -144,8 +144,8 @@ for ii in range(population_size):
     ax.plot(x, y, "g-", alpha=1, linewidth=1, label="Rem")
 
 # plot initial infective period
-x_initial_inf = [0, line_plot_data[4, 2]]
-y_initial_inf = [4, 4]
+x_initial_inf = [0, line_plot_data[-1, 2]]
+y_initial_inf = [-1, -1]
 
 ax.plot(x_initial_inf, y_initial_inf, "r:", alpha=1, linewidth=3, label="Initial Inf")
 
