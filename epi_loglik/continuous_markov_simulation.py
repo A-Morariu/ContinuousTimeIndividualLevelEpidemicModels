@@ -4,6 +4,7 @@ import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 from matplotlib.lines import Line2D
 
@@ -60,11 +61,7 @@ small_scale_epidemic = continuous_markov_simulation(
     seed=[1, 0],
 )
 
-# export the simulated data
-for key, value in small_scale_epidemic._asdict():
-    print(key, np.array(value))
-
-# plotting the epidemic - want this in another file
+# plotting the epidemic - want this in another file?
 
 
 def event_list_to_table(
@@ -117,6 +114,9 @@ line_plot_data = np.hstack(
 )
 print(line_plot_data)
 # create and export the figure
+sns.set_theme()
+sns.set_palette("muted")
+
 fig = plt.figure(figsize=(8, 12))
 ax = fig.add_subplot()
 
@@ -136,19 +136,24 @@ for ii in range(population_size):
     x = [line_plot_data[ii, 1], line_plot_data[ii, 2]]
     y = [ii, ii]
     ax.plot(x, y, "r-", alpha=1, linewidth=3, label="Inf")
-    # ax.text(x, y, f" {ii}", color='red')
 
 # plot removed period
 for ii in range(population_size):
     x = [line_plot_data[ii, 2], np.max(line_plot_data[:, 2])]
     y = [ii, ii]
     ax.plot(x, y, "g-", alpha=1, linewidth=1, label="Rem")
-    # ax.text(x, y, f" {ii}", color='red')
+
+# plot initial infective period
+x_initial_inf = [0, line_plot_data[4, 2]]
+y_initial_inf = [4, 4]
+
+ax.plot(x_initial_inf, y_initial_inf, "r:", alpha=1, linewidth=3, label="Initial Inf")
 
 legend_elements = [
     Line2D([0], [0], color="b", lw=3, label="Sus"),
     Line2D([0], [0], color="r", lw=3, label="Inf"),
     Line2D([0], [0], color="g", lw=3, label="Rem"),
+    Line2D([0], [0], color="r", lw=3, linestyle=":", label="Initial Inf"),
 ]
 
 plt.xlabel("Time")
@@ -159,7 +164,7 @@ plt.legend(
     handles=legend_elements,
     loc="upper center",
     bbox_to_anchor=(0.5, 0.999),
-    ncol=3,
+    ncol=4,
     fancybox=True,
     shadow=True,
 )
