@@ -11,7 +11,6 @@ from matplotlib.lines import Line2D
 from continuous_markov import EpidemicEvent, continuous_markov_simulation
 from continuous_markov_loglik import (
     continuous_time_log_likelihood,
-    continuous_time_log_likelihood_v1,
 )
 
 # aliasing for convenience

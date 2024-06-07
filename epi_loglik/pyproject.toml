@@ -1,0 +1,14 @@
+[tool.poetry]
+name = "continuous-time-log-likelihood-talk"
+version = "0.1.0"
+description = "Source files for continuous time epidemic model log-likelihood evaluation presentation for LURGiE on 2024-06-10"
+authors = ["Alin Morariu <36674219+A-Morariu@users.noreply.github.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
